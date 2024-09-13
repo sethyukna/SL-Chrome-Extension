@@ -1,0 +1,65 @@
+<html>
+
+<head>
+  <style type="text/css">
+    .setting {
+      width: 1200px;
+      padding: 10px 0;
+    }
+
+    input {
+      width: 1075px;
+      margin: 5px 0;
+    }
+
+    label {
+      width: 120px;
+      display: inline-block;
+    }
+  </style>
+</head>
+
+<body>
+
+  <fieldset>
+    <legend>Base URLs</legend>
+
+    <div class="setting">
+
+      <label>
+        DEV
+      </label>
+      <input type="text" id="dev-base-url" />
+      <label>
+        QA
+      </label>
+      <input type="text" id="qa-base-url" />
+      <label>
+        PROD
+      </label>
+      <input type="text" id="prod-base-url" />
+      <label>
+        LOCAL
+      </label>
+      <input type="text" id="local-base-url" />
+    </div>
+  </fieldset>
+
+  <!-- <fieldset>
+    <legend>Additional Pages</legend>
+
+    <div class="setting">
+
+      <label>
+        PageID
+      </label>
+      <input type="text" id="page_id" />
+      <label>
+        Description
+      </label>
+  </fieldset> -->
+  <button id="submitOptions">Save</button>
+  <script src="options.js"></script>
+</body>
+
+</html>

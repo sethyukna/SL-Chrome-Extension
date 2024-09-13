@@ -1,0 +1,58 @@
+body {
+    font-family: "Circular", "Arial", sans-serif;
+}
+form {
+    width: 450px;
+}
+input {
+    width:90%;
+    height:25px;
+    line-height:25px;
+}
+div {
+    padding:10px 0;
+}
+.button-wrapper{
+    display:inline-block;
+}
+.action-label {
+   width: 150px;
+    display:inline-block;
+}
+button:hover{
+    opacity: .7 
+}
+button {
+    cursor:pointer;
+    font-weight: 400;
+    border: none;
+    -webkit-appearance: none;
+    border-radius: 0;
+    color: #FFF;
+    font-weight: 700;
+    font-size: 0.875em;
+    display: inline-block;
+    text-decoration: none;
+    text-transform: uppercase;
+    background: #EC1C24;
+    height: 25px;
+    line-height: 25px;
+    padding: 0 15px;
+}
+select { 
+    width: 100%;
+    margin-bottom: 5px;
+    line-height: 25px;
+    height: 25px;
+}
+fieldset {
+    border: solid 1px #d2d2d2;
+    border-left:none;
+    border-right:none;
+}
+fieldset:first-of-type {
+    border: none;
+}
+fieldset:last-of-type {
+    border-bottom: none;
+}

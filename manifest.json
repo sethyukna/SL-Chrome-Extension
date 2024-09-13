@@ -1,0 +1,67 @@
+{
+  "manifest_version": 2,
+  "name": "Blackbaud Utility",
+  "options_page": "options.html",
+  "description": "This extension helps with common tasks performed in Blackbaud CRM",
+  "version": "1.0",
+  "permissions": [
+    "tabs",
+    "storage",
+    "contextMenus",
+    "clipboardRead",
+    "clipboardWrite"
+  ],
+  "omnibox": {
+    "keyword": "devcrm"
+  },
+  // "content_scripts": [
+  //   {
+  //     "css": ["./popup.css"],
+  //     "matches": ["<all_urls>"]
+  //   }
+  // ],
+  "icons": {
+    "16": "img.png"
+  },
+  "browser_action": {
+    "default_icon": "img.png",
+    "default_popup": "popup.html",
+    "default_title": "Popup Title"
+  },
+  "commands": {
+    "qa": {
+      "suggested_key": {
+        "default": "Alt+Shift+Q",
+        "mac": "Command+Shift+Q"
+      },
+      "description": "Launch page in QA."
+    },
+    "prod": {
+      "suggested_key": {
+        "default": "Alt+Shift+P",
+        "mac": "Command+Shift+P"
+      },
+      "description": "Launch page in PROD."
+    },
+    "dev": {
+      "suggested_key": {
+        "default": "Alt+Shift+D",
+        "mac": "Command+Shift+D"
+      },
+      "description": "Launch page in DEV."
+    },
+    "copyrecordid": {
+      "suggested_key": {
+        "default": "Alt+Shift+R",
+        "mac": "Command+Shift+R"
+      },
+      "description": "Copy record ID"
+    }
+  },
+  "background": {
+    "persistent": true,
+    "scripts": [
+      "background.js"
+    ]
+  }
+}
