@@ -18,13 +18,31 @@ const DEFAULT_ENV_PATHS = {
 
 const EDIT_PATH_PATTERN = ['*://*/*locker-manager-edit*'];
 
+const MAX_RECENT_LAUNCHES = 15;
+
+// Friendly names for the pageUrl segments the popup can launch.
+const PAGE_LABELS = {
+  'locker-manager-edit': 'Locker',
+  'order-management': 'Order'
+};
+
 chrome.runtime.onInstalled.addListener(async () => {
   // Merge rather than overwrite so an upgrade keeps any custom URLs the
   // user set on the options page.
-  const { envPaths } = await chrome.storage.sync.get('envPaths');
+  const { envPaths, recentLaunches } = await chrome.storage.sync.get([
+    'envPaths',
+    'recentLaunches'
+  ]);
+
   await chrome.storage.sync.set({
     envPaths: { ...DEFAULT_ENV_PATHS, ...(envPaths || {}) }
   });
+
+  // v1 stored this as an object keyed by id; it is a list now. Anything that
+  // is not already an array gets reset rather than half-read.
+  if (!Array.isArray(recentLaunches)) {
+    await chrome.storage.sync.set({ recentLaunches: [] });
+  }
 
   buildContextMenus();
 });
@@ -74,20 +92,21 @@ chrome.commands.onCommand.addListener((command) => {
 // The popup can no longer reach these functions directly, so it sends a
 // message instead. Returning true keeps the response channel open for the
 // async handler.
+const MESSAGE_HANDLERS = {
+  redirectPage: (message) => redirectPage(message.env),
+  launchLink: (message) => launchLink(message.options),
+  clearRecentLaunches: () => chrome.storage.sync.set({ recentLaunches: [] })
+};
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  const handler =
-    message?.type === 'redirectPage'
-      ? redirectPage(message.env)
-      : message?.type === 'launchLink'
-        ? launchLink(message.options)
-        : null;
+  const handler = MESSAGE_HANDLERS[message?.type];
 
   if (!handler) {
-    sendResponse({ ok: false, error: 'Unknown message type' });
+    sendResponse({ ok: false, error: `Unknown message type: ${message?.type}` });
     return false;
   }
 
-  handler
+  Promise.resolve(handler(message))
     .then(() => sendResponse({ ok: true }))
     .catch((error) => sendResponse({ ok: false, error: error.message }));
 
@@ -140,8 +159,8 @@ async function launchLink(options) {
     return;
   }
 
-  const id = (options.pageLinkInfo || options.guid || '').trim();
-  if (!id) {
+  const id = (options.guid || '').trim();
+  if (!id || !options.pageUrl) {
     return;
   }
 
@@ -151,6 +170,26 @@ async function launchLink(options) {
     url: `${base}/${options.pageUrl}/${id}`,
     active: false,
     index: tab ? tab.index + 1 : undefined
+  });
+
+  // Recorded here rather than after the tab loads: the old version waited 5s
+  // on a timer to inspect the tab title, which a suspended worker never runs.
+  await recordRecentLaunch({ id, pageUrl: options.pageUrl });
+}
+
+async function recordRecentLaunch({ id, pageUrl }) {
+  const { recentLaunches } = await chrome.storage.sync.get('recentLaunches');
+  const existing = Array.isArray(recentLaunches) ? recentLaunches : [];
+
+  // Same record launched again moves to the top instead of duplicating.
+  const deduped = existing.filter(
+    (entry) => !(entry.id === id && entry.pageUrl === pageUrl)
+  );
+
+  deduped.unshift({ id, pageUrl, launchedAt: Date.now() });
+
+  await chrome.storage.sync.set({
+    recentLaunches: deduped.slice(0, MAX_RECENT_LAUNCHES)
   });
 }
 

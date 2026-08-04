@@ -34,6 +34,19 @@
         </div>
       </div>
     </fieldset>
+    <fieldset id="open-recent" hidden>
+      <label class="action-label" for="open-link-recent">Open recent item:</label>
+      <select id="open-link-recent"></select>
+      <div>
+        <div class="button-wrapper">
+          <button type="button" data-openrecent="dev">Dev</button>
+          <button type="button" data-openrecent="qa">QA</button>
+          <button type="button" data-openrecent="prod">PROD</button>
+          <button type="button" data-openrecent="local">Local</button>
+        </div>
+        <button type="button" id="clear-recent" class="link-button">Clear</button>
+      </div>
+    </fieldset>
   </form>
   <script src="popup.js"></script>
 </body>

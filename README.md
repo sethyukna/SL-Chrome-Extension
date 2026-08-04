@@ -46,6 +46,17 @@ Click the toolbar icon. Enter a **locker ID** or **order ID**, then click the
 environment you want. The record opens in a new background tab next to the
 current one. Pressing <kbd>Enter</kbd> in a field is a shortcut for **Dev**.
 
+### Recent items
+
+Anything you launch from the popup is remembered, so you can reopen it without
+pasting the ID again. Pick it from **Open recent item** and choose an
+environment — handy for checking the same locker across DEV and QA.
+
+The last 15 launches are kept, newest first, labelled like `Locker: <id>`.
+Relaunching something moves it back to the top rather than duplicating it. The
+list syncs with your Chrome profile, and **Clear** empties it. The dropdown is
+hidden until you've launched something.
+
 ### Right-click menu
 
 On a `locker-manager-edit` page, right-click anywhere to get:
@@ -126,11 +137,18 @@ from outside the Web Store, so it fails more confusingly than the zip does.
 
 ## What changed in the MV3 migration
 
-Behavioral note first: **the unused "recent launches" tracking was removed.**
-It recorded launches to storage but nothing ever read them back — the only UI
-that consumed it had been commented out in `popup.html`/`popup.js`. It also
-relied on a 5-second timer and a page-title check, neither of which survives a
-service worker being shut down when idle. Everything else works as before.
+Behavioral note first: **the "recent launches" dropdown was rebuilt.** In v1 the
+UI for it was commented out in `popup.html`/`popup.js`, so nothing ever read the
+data back, and the storage format was broken — entries were keyed by the URL's
+last segment with `url.split('/')[1]` as the label, which is always the empty
+string between the two slashes in `https://host/page/id`. Every dropdown entry
+would have been blank.
+
+It now stores a proper list of `{id, pageUrl, launchedAt}` records and is
+[documented above](#recent-items). Recording happens when the tab is created
+rather than 5 seconds later via `setTimeout` + a page-title check, since an
+idle service worker gets killed long before such a timer fires. Upgrades from
+v1 reset the old object-shaped value to an empty list.
 
 **Manifest**
 
