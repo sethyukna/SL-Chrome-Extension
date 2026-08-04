@@ -34,17 +34,88 @@ button {
     display: inline-block;
     text-decoration: none;
     text-transform: uppercase;
-    background: #EC1C24;
+    background: #2e4481;
     height: 25px;
     line-height: 25px;
     padding: 0 15px;
 }
-select { 
+select {
     width: 100%;
     margin-bottom: 5px;
     line-height: 25px;
     height: 25px;
 }
+.link-button {
+    background: none;
+    color: #2e4481;
+    text-decoration: underline;
+    padding: 0 5px;
+    float: right;
+}
+
+/* Recent items list */
+#open-link-recent {
+    /* Tall enough for all 10 rows, so nothing is hidden behind a scroll. */
+    max-height: 300px;
+    overflow-y: auto;
+    border: solid 1px #d2d2d2;
+    margin-bottom: 5px;
+}
+/* Each row is a <button>, so the shared button styling is reset here. */
+.recent-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 5px 6px;
+    background: none;
+    border: none;
+    border-bottom: solid 1px #eee;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.8125em;
+    text-align: left;
+    text-transform: none;
+    height: auto;
+    line-height: normal;
+}
+.recent-item:last-child {
+    border-bottom: none;
+}
+.recent-item:hover {
+    background: #f5f6f8;
+    opacity: 1;
+}
+.recent-item:focus-visible {
+    outline: 2px solid #2e4481;
+    outline-offset: -2px;
+}
+.recent-item .recent-id {
+    /* Long GUIDs truncate rather than widening the popup. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Environment chip */
+.env-chip {
+    /* Fixed width so the id column lines up across rows. */
+    flex: 0 0 44px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #FFF;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.env-chip[data-env="dev"]   { background: #1f7a5c; }
+.env-chip[data-env="qa"]    { background: #8a6300; }
+.env-chip[data-env="prod"]  { background: #c0392b; }
+.env-chip[data-env="local"] { background: #5a6472; }
 fieldset {
     border: solid 1px #d2d2d2;
     border-left:none;

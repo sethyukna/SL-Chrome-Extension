@@ -1,19 +1,36 @@
-document.getElementById('submitOptions').addEventListener('click', function () {
-  chrome.storage.sync.set({ 'envPaths': {
-    "DEV":   document.getElementById("dev-base-url").value
-    , "QA":document.getElementById("qa-base-url").value 
-    , "PROD":document.getElementById("prod-base-url").value 
-    , "LOCAL": document.getElementById("local-base-url").value
-  }});
+const FIELDS = {
+  DEV: 'dev-base-url',
+  QA: 'qa-base-url',
+  PROD: 'prod-base-url',
+  LOCAL: 'local-base-url'
+};
 
-}, function () {
-    console.log('local is ' + document.getElementById("localEnvironment").value);
-  });
+function stripTrailingSlash(value) {
+  return value.trim().replace(/\/+$/, '');
+}
 
-chrome.storage.sync.get('envPaths', function (data) {
-  
-  document.getElementById("dev-base-url").value = data.envPaths.DEV || '';
-  document.getElementById("qa-base-url").value = data.envPaths.QA || '';
-  document.getElementById("prod-base-url").value = data.envPaths.PROD || '';
-  document.getElementById("local-base-url").value = data.envPaths.LOCAL || '';
+document.getElementById('submitOptions').addEventListener('click', async () => {
+  const envPaths = {};
+  for (const [env, id] of Object.entries(FIELDS)) {
+    envPaths[env] = stripTrailingSlash(document.getElementById(id).value);
+  }
+
+  await chrome.storage.sync.set({ envPaths });
+
+  const status = document.getElementById('status');
+  status.textContent = 'Saved.';
+  setTimeout(() => {
+    status.textContent = '';
+  }, 2000);
 });
+
+async function load() {
+  const { envPaths } = await chrome.storage.sync.get('envPaths');
+  const paths = envPaths || {};
+
+  for (const [env, id] of Object.entries(FIELDS)) {
+    document.getElementById(id).value = paths[env] || '';
+  }
+}
+
+load();

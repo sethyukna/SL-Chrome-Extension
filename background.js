@@ -1,170 +1,240 @@
 /*
-  Add right click copy functions
-      recordid
-  Add right click open in new tab
-     all links?
+  MV3 service worker.
 
+  Two things differ from the old persistent background page:
+  1. There is no DOM here, so clipboard writes are injected into the active
+     tab with chrome.scripting instead of using document.execCommand.
+  2. The worker is torn down when idle, so context menus are built in
+     onInstalled and popup calls arrive as messages rather than through
+     chrome.extension.getBackgroundPage().
 */
 
-chrome.runtime.onInstalled.addListener(function () {
-  chrome.storage.sync.set({
-    'envPaths': {
-      "DEV": "https://crm-dev.advancement.brown.edu/BBdevl/webui/webshellpage.aspx?databasename=BBDevl#",
-      "QA": "https://qa-crm.advancement.brown.edu/BBStaging/webui/webshellpage.aspx?databasename=BBStaging#",
-      "PROD": "https://phenix.advancement.brown.edu/BBPhenix/webui/webshellpage.aspx?databasename=BBPhenix#",
-      "LOCAL": ""
-    }
+const DEFAULT_ENV_PATHS = {
+  DEV: 'https://homefield-client-dev.squadlocker.com',
+  QA: 'https://homefield-client-qa.squadlocker.com',
+  PROD: 'https://homefield.squadlocker.com',
+  LOCAL: ''
+};
+
+const EDIT_PATH_PATTERN = ['*://*/*locker-manager-edit*'];
+
+const MAX_RECENT_LAUNCHES = 10;
+
+// Friendly names for the pageUrl segments the popup can launch.
+const PAGE_LABELS = {
+  'locker-manager-edit': 'Locker',
+  'order-management': 'Order'
+};
+
+chrome.runtime.onInstalled.addListener(async () => {
+  // Merge rather than overwrite so an upgrade keeps any custom URLs the
+  // user set on the options page.
+  const { envPaths, recentLaunches } = await chrome.storage.sync.get([
+    'envPaths',
+    'recentLaunches'
+  ]);
+
+  await chrome.storage.sync.set({
+    envPaths: { ...DEFAULT_ENV_PATHS, ...(envPaths || {}) }
   });
-  chrome.storage.sync.set({
-    'recentLaunches': {}
-  });
-  // chrome.contextMenus.create({
-  //   "id": "sampleContextMenu",
-  //   "title": "Sample Context Menu",
-  //   "contexts": ["selection"]
-  // });
-});
 
-
-chrome.contextMenus.removeAll();
-chrome.contextMenus.create({
-  "title": "Open in", "id": "openin",
-  "documentUrlPatterns": ["*://*/*webshellpage.aspx*"]
-});
-
-chrome.contextMenus.create({
-  "title": "Copy record id", "id": "copyitem",
-  "documentUrlPatterns": ["*://*/*webshellpage.aspx*"]
-});
-chrome.contextMenus.create({ "title": "Dev", "id": "dev", parentId: "openin" })
-
-chrome.contextMenus.create({ "title": "Qa", "id": "qa", parentId: "openin" })
-
-chrome.contextMenus.create({ "title": "Prod", "id": "prod", parentId: "openin" })
-
-chrome.contextMenus.create({ "title": "Local", "id": "local", parentId: "openin" })
-
-chrome.contextMenus.onClicked.addListener(function callback(info, tab) {
-  if (info.parentMenuItemId == 'openin') {
-    redirectPage(info.menuItemId);
-  } else {
-    copyValueFromQueryString('recordid');
-  }
-});
-
-chrome.commands.onCommand.addListener(function (command) {
-  if (command != 'copyrecordid') {
-    redirectPage(command);
-  } else {
-    copyValueFromQueryString('recordid');
+  // v1 stored this as an object keyed by id; it is a list now. Anything that
+  // is not already an array gets reset rather than half-read.
+  if (!Array.isArray(recentLaunches)) {
+    await chrome.storage.sync.set({ recentLaunches: [] });
   }
 
+  buildContextMenus();
 });
 
-function redirectPage(env) {
-  getBaseUrl(env, function (base) {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (t) {
-      var tab = t[0];
-      if (!tab) { return; }
-      chrome.tabs.create({
-        "url": base + (tab.url.split('#')[1] || ''),
-        "active": false,
-        "index": tab.index + 1
+function buildContextMenus() {
+  // removeAll before create, otherwise re-running onInstalled after an
+  // update throws "duplicate id".
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      title: 'Open in',
+      id: 'openin',
+      documentUrlPatterns: EDIT_PATH_PATTERN
+    });
+
+    chrome.contextMenus.create({
+      title: 'Copy record id',
+      id: 'copyitem',
+      documentUrlPatterns: EDIT_PATH_PATTERN
+    });
+
+    for (const env of ['dev', 'qa', 'prod', 'local']) {
+      chrome.contextMenus.create({
+        title: env === 'qa' ? 'QA' : env.charAt(0).toUpperCase() + env.slice(1),
+        id: env,
+        parentId: 'openin'
       });
-    });
-  });
-};
-
-function copyText(text) {
-  const input = document.createElement('input');
-  document.body.appendChild(input);
-  input.value = text || '';
-  input.focus();
-  input.select();
-  const result = document.execCommand('copy');
-};
-
-function copyValueFromQueryString(variable) {
-  chrome.tabs.query({ active: true, currentWindow: true }, function (t) {
-    if (!t || t.length == 0) {
-      return;
-    }
-    var split = t[0].url.split('#');
-    if (split.length < 2) {
-      return;
-    }
-    var query = split[1];
-
-    var vars = query.split('&');
-    for (var i = 0; i < vars.length; i++) {
-      var pair = vars[i].split('=');
-      if (decodeURIComponent(pair[0].toLocaleLowerCase()) == variable) {
-
-        copyText(decodeURIComponent(pair[1] || ''));
-        return;
-
-      }
     }
   });
+}
+
+chrome.contextMenus.onClicked.addListener((info) => {
+  if (info.parentMenuItemId === 'openin') {
+    redirectPage(info.menuItemId);
+  } else if (info.menuItemId === 'copyitem') {
+    copyValueFromQueryString('recordid');
+  }
+});
+
+chrome.commands.onCommand.addListener((command) => {
+  if (command === 'copyrecordid') {
+    copyValueFromQueryString('recordid');
+  } else {
+    redirectPage(command);
+  }
+});
+
+// The popup can no longer reach these functions directly, so it sends a
+// message instead. Returning true keeps the response channel open for the
+// async handler.
+const MESSAGE_HANDLERS = {
+  redirectPage: (message) => redirectPage(message.env),
+  launchLink: (message) => launchLink(message.options),
+  clearRecentLaunches: () => chrome.storage.sync.set({ recentLaunches: [] })
 };
 
-function launchLink(options) { //env, guid, pageId, pageLinkInfo) {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  const handler = MESSAGE_HANDLERS[message?.type];
 
-  getBaseUrl(options.env, function (base) {
+  if (!handler) {
+    sendResponse({ ok: false, error: `Unknown message type: ${message?.type}` });
+    return false;
+  }
 
+  Promise.resolve(handler(message))
+    .then(() => sendResponse({ ok: true }))
+    .catch((error) => sendResponse({ ok: false, error: error.message }));
 
-    chrome.tabs.query({ active: true, currentWindow: true }, function (t) {
-      if (!t) {
-        return;
-      }
-      var tabIndex = t[0].index + 1;
-      var url = 'pageType=p&pageId=' + (options.pageId || '') + '&recordId=' + (options.guid || '');
-      if(options.pageLinkInfo) { 
-        url = options.pageLinkInfo;
-      }
-      chrome.tabs.create({
-        "url": base + url,
-        "active": false,
-        "index": tabIndex
-      }
-        , function (tabInfo) {
-          setTimeout(function () {
+  return true;
+});
 
-            chrome.storage.sync.get('recentLaunches', function (data) {
-              var launches = data.recentLaunches;
+async function getActiveTab() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  return tab;
+}
 
-              chrome.tabs.get(tabInfo.id, function (tab) {
-                if (tab.title && (tab.title.indexOf('not found') > 0 || tab.title.indexOf('error') > 0 || tab.title == 'Blackbaud CRM')) {
-                  return;
-                }
-                var updatedLaunches = launches;
-                updatedLaunches[tab.url.split('#')[1].toLocaleString()] = tab.title.split("-")[0];
-                chrome.storage.sync.set({
-                  'recentLaunches': updatedLaunches
-                });
+async function getBaseUrl(env) {
+  const { envPaths } = await chrome.storage.sync.get('envPaths');
+  const paths = { ...DEFAULT_ENV_PATHS, ...(envPaths || {}) };
 
-              });
-            });
+  switch (env) {
+    case 'dev':
+      return paths.DEV;
+    case 'qa':
+      return paths.QA;
+    case 'local':
+      return paths.LOCAL;
+    default:
+      return paths.PROD;
+  }
+}
 
-          }, 5000);
-        });
-    });
+async function redirectPage(env) {
+  const tab = await getActiveTab();
+  if (!tab?.url) {
+    return;
+  }
 
+  const base = await getBaseUrl(env);
+  if (!base) {
+    // LOCAL is blank until it is set on the options page.
+    return;
+  }
+
+  await chrome.tabs.create({
+    url: base + (tab.url.split('/locker-manager-edit/')[1] || ''),
+    active: false,
+    index: tab.index + 1
   });
-};
+}
 
-function getBaseUrl(env, callback) {
-  chrome.storage.sync.get('envPaths', function (data) {
-    var base = '';
-    if (env == 'dev') {
-      base = data.envPaths.DEV;
-    } else if (env == 'qa') {
-      base = data.envPaths.QA;
-    } else if (env == 'local') {
-      base = data.envPaths.LOCAL;
-    } else {
-      base = data.envPaths.PROD;
-    }
-    callback(base);
+async function launchLink(options) {
+  const base = await getBaseUrl(options.env);
+  if (!base) {
+    return;
+  }
+
+  const id = (options.guid || '').trim();
+  if (!id || !options.pageUrl) {
+    return;
+  }
+
+  const tab = await getActiveTab();
+
+  await chrome.tabs.create({
+    url: `${base}/${options.pageUrl}/${id}`,
+    active: false,
+    index: tab ? tab.index + 1 : undefined
   });
-};
+
+  // Recorded here rather than after the tab loads: the old version waited 5s
+  // on a timer to inspect the tab title, which a suspended worker never runs.
+  await recordRecentLaunch({ id, pageUrl: options.pageUrl, env: options.env });
+}
+
+async function recordRecentLaunch({ id, pageUrl, env }) {
+  const { recentLaunches } = await chrome.storage.sync.get('recentLaunches');
+  const existing = Array.isArray(recentLaunches) ? recentLaunches : [];
+
+  // Same record in the same environment moves to the top instead of
+  // duplicating. The env is part of the identity, so the same locker opened
+  // in DEV and QA is two entries.
+  const deduped = existing.filter(
+    (entry) =>
+      !(entry.id === id && entry.pageUrl === pageUrl && entry.env === env)
+  );
+
+  deduped.unshift({ id, pageUrl, env, launchedAt: Date.now() });
+
+  await chrome.storage.sync.set({
+    recentLaunches: deduped.slice(0, MAX_RECENT_LAUNCHES)
+  });
+}
+
+async function copyValueFromQueryString(variable) {
+  const tab = await getActiveTab();
+  if (!tab?.url || !tab.id) {
+    return;
+  }
+
+  // Values live in the hash fragment, e.g. #recordid=<guid>&...
+  const hash = tab.url.split('#')[1];
+  if (!hash) {
+    return;
+  }
+
+  const value = new URLSearchParams(hash).get(variable);
+  if (!value) {
+    return;
+  }
+
+  await copyTextInTab(tab.id, value);
+}
+
+async function copyTextInTab(tabId, text) {
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    func: async (value) => {
+      try {
+        await navigator.clipboard.writeText(value);
+      } catch {
+        // navigator.clipboard needs a focused document; fall back to a
+        // temporary textarea when the page is not focused.
+        const area = document.createElement('textarea');
+        area.value = value;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+    },
+    args: [text]
+  });
+}
