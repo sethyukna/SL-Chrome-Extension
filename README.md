@@ -59,20 +59,16 @@ environment it was launched in:
 | red `PROD` | PROD — red so production is obvious at a glance |
 | grey `LOCAL` | LOCAL |
 
-Pick a row, then click an environment button to open it there — handy for
-checking the same locker across DEV and QA. **Double-click** a row (or select it
-and press <kbd>Enter</kbd>) to reopen it in its original environment.
-<kbd>↑</kbd>/<kbd>↓</kbd> move between rows.
+**A single click on a row reopens it** in the environment shown on its chip.
+<kbd>Tab</kbd> reaches the rows and <kbd>Enter</kbd> or <kbd>Space</kbd>
+activates them.
 
-The last 15 launches are kept, newest first, labelled like `Locker: <id>`. A
-record counts as distinct per environment, so the same locker in DEV and QA is
-two rows; relaunching an existing one moves it back to the top instead of
-duplicating. The list syncs with your Chrome profile, and **Clear** empties it.
-The list stays hidden until you've launched something.
-
-Rows saved before this feature shipped have no environment recorded and show a
-dashed `—` chip. They still open via the environment buttons; only the
-reopen-in-original shortcut is unavailable for them.
+The last 10 launches are kept, newest first, labelled like `Locker: <id>`. A
+record counts as distinct per environment, so the same locker opened in DEV and
+QA gives you two rows — one click each to jump between them. Relaunching an
+existing one moves it back to the top instead of duplicating. The list syncs
+with your Chrome profile, and **Clear** empties it. The list stays hidden until
+you've launched something.
 
 ### Right-click menu
 
@@ -167,11 +163,16 @@ rather than 5 seconds later via `setTimeout` + a page-title check, since an
 idle service worker gets killed long before such a timer fires. Upgrades from
 v1 reset the old object-shaped value to an empty list.
 
-The recent list is a `role="listbox"` of `div`s rather than a `<select>`. That
-is deliberate: browsers strip author styling from `<option>` elements, so the
-environment chips cannot be rendered inside a native dropdown. The listbox
-implements arrow-key navigation and `aria-selected` to keep the keyboard and
-screen-reader behaviour a `<select>` would have given for free.
+The recent list is a stack of `<button>` rows rather than a `<select>`. That is
+deliberate: browsers strip author styling from `<option>` elements, so the
+environment chips cannot be rendered inside a native dropdown. Using real
+buttons (instead of `div`s with ARIA) means focus, <kbd>Tab</kbd> order, and
+<kbd>Enter</kbd>/<kbd>Space</kbd> activation come from the platform rather than
+from hand-written key handlers.
+
+Because a row opens in its own recorded environment on click, entries stored
+before `env` was tracked have nowhere to open and are filtered out of the list
+rather than rendered as dead rows. They age off within 10 launches.
 
 **Manifest**
 

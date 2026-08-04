@@ -53,34 +53,43 @@ select {
     float: right;
 }
 
-/* Recent items listbox */
+/* Recent items list */
 #open-link-recent {
-    max-height: 132px;
+    /* Tall enough for all 10 rows, so nothing is hidden behind a scroll. */
+    max-height: 300px;
     overflow-y: auto;
     border: solid 1px #d2d2d2;
     margin-bottom: 5px;
 }
-#open-link-recent:focus-visible {
-    outline: 2px solid #2e4481;
-    outline-offset: -2px;
-}
+/* Each row is a <button>, so the shared button styling is reset here. */
 .recent-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 4px 6px;
-    cursor: pointer;
-    font-size: 0.8125em;
+    width: 100%;
+    padding: 5px 6px;
+    background: none;
+    border: none;
     border-bottom: solid 1px #eee;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.8125em;
+    text-align: left;
+    text-transform: none;
+    height: auto;
+    line-height: normal;
 }
 .recent-item:last-child {
     border-bottom: none;
 }
 .recent-item:hover {
     background: #f5f6f8;
+    opacity: 1;
 }
-.recent-item[aria-selected="true"] {
-    background: #e8ebf3;
+.recent-item:focus-visible {
+    outline: 2px solid #2e4481;
+    outline-offset: -2px;
 }
 .recent-item .recent-id {
     /* Long GUIDs truncate rather than widening the popup. */
@@ -107,13 +116,6 @@ select {
 .env-chip[data-env="qa"]    { background: #8a6300; }
 .env-chip[data-env="prod"]  { background: #c0392b; }
 .env-chip[data-env="local"] { background: #5a6472; }
-/* Entries recorded before the environment was tracked. */
-.env-chip[data-env="unknown"] {
-    background: #FFF;
-    color: #999;
-    border: dashed 1px #c4c4c4;
-    line-height: 14px;
-}
 fieldset {
     border: solid 1px #d2d2d2;
     border-left:none;

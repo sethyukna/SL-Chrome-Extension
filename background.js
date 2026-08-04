@@ -18,7 +18,7 @@ const DEFAULT_ENV_PATHS = {
 
 const EDIT_PATH_PATTERN = ['*://*/*locker-manager-edit*'];
 
-const MAX_RECENT_LAUNCHES = 15;
+const MAX_RECENT_LAUNCHES = 10;
 
 // Friendly names for the pageUrl segments the popup can launch.
 const PAGE_LABELS = {
