@@ -1,64 +1,38 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-  <style type="text/css">
-    .setting {
-      width: 1200px;
-      padding: 10px 0;
-    }
-
-    input {
-      width: 1075px;
-      margin: 5px 0;
-    }
-
-    label {
-      width: 120px;
-      display: inline-block;
-    }
-  </style>
+  <meta charset="utf-8">
+  <title>SL Utility Options</title>
+  <link rel="stylesheet" href="options.css">
 </head>
 
 <body>
-
   <fieldset>
     <legend>Base URLs</legend>
+    <p class="hint">
+      Enter the base URL for each environment, without a trailing slash.
+      Leave LOCAL blank if you are not running the client locally.
+    </p>
 
     <div class="setting">
+      <label for="dev-base-url">DEV</label>
+      <input type="text" id="dev-base-url" placeholder="https://homefield-client-dev.squadlocker.com" />
 
-      <label>
-        DEV
-      </label>
-      <input type="text" id="dev-base-url" />
-      <label>
-        QA
-      </label>
-      <input type="text" id="qa-base-url" />
-      <label>
-        PROD
-      </label>
-      <input type="text" id="prod-base-url" />
-      <label>
-        LOCAL
-      </label>
-      <input type="text" id="local-base-url" />
+      <label for="qa-base-url">QA</label>
+      <input type="text" id="qa-base-url" placeholder="https://homefield-client-qa.squadlocker.com" />
+
+      <label for="prod-base-url">PROD</label>
+      <input type="text" id="prod-base-url" placeholder="https://homefield.squadlocker.com" />
+
+      <label for="local-base-url">LOCAL</label>
+      <input type="text" id="local-base-url" placeholder="http://localhost:3000" />
     </div>
   </fieldset>
 
-  <!-- <fieldset>
-    <legend>Additional Pages</legend>
+  <button id="submitOptions" type="button">Save</button>
+  <span id="status" role="status"></span>
 
-    <div class="setting">
-
-      <label>
-        PageID
-      </label>
-      <input type="text" id="page_id" />
-      <label>
-        Description
-      </label>
-  </fieldset> -->
-  <button id="submitOptions">Save</button>
   <script src="options.js"></script>
 </body>
 

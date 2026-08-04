@@ -1,0 +1,9 @@
+# Build output
+dist/
+*.zip
+*.crx
+*.pem
+
+# OS noise
+Thumbs.db
+.DS_Store

@@ -1,135 +1,41 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-  <!-- <style type="text/css">
-    body {
-      font-family: "Circular", "Arial", sans-serif;
-    }
-
-    form {
-      width: 500px;
-    }
-
-    input {
-      width: 90%;
-      height: 25px;
-      line-height: 25px;
-    }
-
-    div {
-      padding: 10px 0;
-    }
-
-    .button-wrapper {
-      display: inline-block;
-    }
-
-    .action-label {
-      width: 150px;
-      display: inline-block;
-    }
-
-    button:hover {
-      opacity: .7
-    }
-
-    button {
-      cursor: pointer;
-      font-weight: 400;
-      border: none;
-      -webkit-appearance: none;
-      border-radius: 0;
-      color: #FFF;
-      font-weight: 700;
-      font-size: 0.875em;
-      display: inline-block;
-      text-decoration: none;
-      text-transform: uppercase;
-      background: #EC1C24;
-      height: 25px;
-      line-height: 25px;
-      padding: 0 15px;
-    }
-
-    fieldset {
-      border: solid 1px #d2d2d2;
-      border-left: none;
-      border-right: none;
-    }
-
-    fieldset:first-of-type {
-      border: none;
-    }
-
-    fieldset:last-of-type {
-      border-bottom: none;
-    }
-  </style> -->
-  <link rel="stylesheet" type="text/css" href="popup.css">
+  <meta charset="utf-8">
+  <title>SL Utility</title>
+  <link rel="stylesheet" href="popup.css">
 </head>
 
 <body>
-  <h2><img src="img.png" />Blackbaud Utility</h4>
+  <h2>SL Utility</h2>
   <form>
-    <fieldset class="open-with-guid">
-      <input type="text" placeholder="Enter Constituent Guid" class="guid" />
+    <fieldset class="open-with-id">
+      <input type="text" placeholder="Enter locker id" class="guid" />
       <div>
-        <label class="action-label">Open constituent in:</label>
+        <label class="action-label">Open locker in:</label>
         <div class="button-wrapper">
-          <button data-openin="dev" data-pageid="88159265-2b7e-4c7b-82a2-119d01ecd40f">Dev</button>
-          <button data-openin="qa" data-pageid="88159265-2b7e-4c7b-82a2-119d01ecd40f">QA</button>
-          <button data-openin="prod" data-pageid="88159265-2b7e-4c7b-82a2-119d01ecd40f">PROD</button>
-          <button data-openin="local" data-pageid="88159265-2b7e-4c7b-82a2-119d01ecd40f">Local</button>
-        </div>
-      </div>
-    </fieldset>    
-    <fieldset class="open-with-guid">
-      <input type="text" placeholder="Enter Gift Guid" class="guid" />
-      <div>
-        <label class="action-label">Open gift in:</label>
-        <div class="button-wrapper">
-          <button data-openin="dev" data-pageid="387f861b-6c03-486c-9ff5-9cc5bb7a5275">Dev</button>
-          <button data-openin="qa"  data-pageid="387f861b-6c03-486c-9ff5-9cc5bb7a5275">QA</button>
-          <button data-openin="prod" data-pageid="387f861b-6c03-486c-9ff5-9cc5bb7a5275">PROD</button>
-          <button data-openin="local" data-pageid="387f861b-6c03-486c-9ff5-9cc5bb7a5275">Local</button>
+          <button type="button" data-openin="dev" data-pageurl="locker-manager-edit">Dev</button>
+          <button type="button" data-openin="qa" data-pageurl="locker-manager-edit">QA</button>
+          <button type="button" data-openin="prod" data-pageurl="locker-manager-edit">PROD</button>
+          <button type="button" data-openin="local" data-pageurl="locker-manager-edit">Local</button>
         </div>
       </div>
     </fieldset>
-    <fieldset id="open-in-environment">
+    <fieldset class="open-with-id">
+      <input type="text" placeholder="Enter Order ID" class="guid" />
       <div>
-        <label class="action-label">Open current page in:</label>
+        <label class="action-label">Open order in:</label>
         <div class="button-wrapper">
-          <button  data-openin="dev">Dev</button>
-          <button data-openin="qa">QA</button>
-          <button  data-openin="prod">PROD</button>
-          <button  data-openin="local">Local</button>
-        </div>
-      </div>
-    </fieldset>
-    <fieldset id="open-recent">
-      <div>
-        <label class="action-label">Open recent search item: </label>
-        <div class="button-wrapper">
-          <select id="open-link-recent">
-          </select>
-          <br />
-          <button  data-openin="dev">Dev</button>
-          <button data-openin="qa">QA</button>
-          <button  data-openin="prod">PROD</button>
-          <button  data-openin="local">Local</button>
+          <button type="button" data-openin="dev" data-pageurl="order-management">Dev</button>
+          <button type="button" data-openin="qa" data-pageurl="order-management">QA</button>
+          <button type="button" data-openin="prod" data-pageurl="order-management">PROD</button>
+          <button type="button" data-openin="local" data-pageurl="order-management">Local</button>
         </div>
       </div>
     </fieldset>
   </form>
-  <!-- <tr>
-      <td>Recent</td>
-      <td>
-        <select id="open-constituent-recent">
-        </select>
-      </td>      
-    </tr>
-  </table> -->
+  <script src="popup.js"></script>
 </body>
-<script src="popup.js"></script>
 
 </html>

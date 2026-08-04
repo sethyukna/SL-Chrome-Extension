@@ -1,63 +1,61 @@
-(function () {
-   var _me = this;
+/*
+  chrome.extension.getBackgroundPage() does not exist in MV3, so the popup
+  talks to the service worker over chrome.runtime.sendMessage.
+*/
 
-  _me.init = function () {
-    document.querySelector('.guid').focus();
+function init() {
+  document.querySelector('.guid')?.focus();
 
-    chrome.storage.sync.get('recentLaunches', function (data) {
+  for (const button of document.querySelectorAll(
+    '#open-in-environment button[data-openin]'
+  )) {
+    button.addEventListener('click', async (event) => {
+      event.preventDefault();
+      await chrome.runtime.sendMessage({
+        type: 'redirectPage',
+        env: button.dataset.openin
+      });
+      window.close();
+    });
+  }
 
-      var recentSelect = document.querySelector('#open-link-recent');
-      var count = 0;
-      for (var key in data.recentLaunches) {
+  for (const button of document.querySelectorAll(
+    '.open-with-id button[data-openin]'
+  )) {
+    button.addEventListener('click', async (event) => {
+      // These buttons live inside a <form>; without this the popup submits
+      // and reloads instead of opening the tab.
+      event.preventDefault();
 
-        var label = data.recentLaunches[key];
+      const fieldset = button.closest('.open-with-id');
+      const guid = fieldset.querySelector('.guid').value.trim();
 
-        var newOption = document.createElement('option');
-        newOption.text = label;
-        newOption.value = key;
-        recentSelect.add(newOption);
-        count++;
-        if (count > 10) {
-          break;
+      if (!guid) {
+        fieldset.querySelector('.guid').focus();
+        return;
+      }
+
+      await chrome.runtime.sendMessage({
+        type: 'launchLink',
+        options: {
+          env: button.dataset.openin,
+          pageUrl: button.dataset.pageurl,
+          guid
         }
+      });
+      window.close();
+    });
+  }
+
+  // Enter in a text field triggers that fieldset's Dev button.
+  for (const input of document.querySelectorAll('.guid')) {
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        input.closest('.open-with-id')?.querySelector('button[data-openin]')?.click();
       }
     });
-
-    var e = document.querySelectorAll('#open-in-environment >* button[data-openin]');
-
-    for (var i = 0; i < e.length; i++) {
-      var c = e[i];
-      c.addEventListener('click', function () {
-        var env = this.getAttribute('data-openin');
-        chrome.extension.getBackgroundPage().redirectPage(env);
-        window.close();
-      });
-    }
-
-    var openConst = document.querySelectorAll('.open-with-guid >* button[data-openin]');
-    for (var i = 0; i < openConst.length; i++) {
-      var c = openConst[i];
-      c.addEventListener('click', function () {
-        var env = this.getAttribute('data-openin');
-        var pageId = this.getAttribute('data-pageid');
-        var guid = this.parentElement.parentElement.parentElement.querySelector('.guid').value;
-        var options = { 'env': env, 'pageId': pageId, 'guid': guid };
-        chrome.extension.getBackgroundPage().launchLink(options);
-        window.close();
-      });
-    }
-
-    var openRecent = document.querySelectorAll('#open-recent >* button[data-openin]');
-    for (var i = 0; i < openRecent.length; i++) {
-      var c = openRecent[i];
-      c.addEventListener('click', function () {
-        var env = this.getAttribute('data-openin');
-        var options = { 'env': env, 'pageLinkInfo': document.querySelector('#open-link-recent').value };
-        chrome.extension.getBackgroundPage().launchLink(options);
-        window.close();
-      });
-    }
   }
-  _me.init();
+}
 
-})();
+init();

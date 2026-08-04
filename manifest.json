@@ -1,32 +1,33 @@
 {
-  "manifest_version": 2,
-  "name": "Blackbaud Utility",
+  "manifest_version": 3,
+  "name": "SquadLocker Utility",
+  "description": "Quickly open lockers and orders across DEV, QA, PROD, and LOCAL environments.",
+  "version": "2.0.0",
+  "minimum_chrome_version": "116",
   "options_page": "options.html",
-  "description": "This extension helps with common tasks performed in Blackbaud CRM",
-  "version": "1.0",
   "permissions": [
     "tabs",
     "storage",
     "contextMenus",
-    "clipboardRead",
+    "scripting",
     "clipboardWrite"
   ],
-  "omnibox": {
-    "keyword": "devcrm"
-  },
-  // "content_scripts": [
-  //   {
-  //     "css": ["./popup.css"],
-  //     "matches": ["<all_urls>"]
-  //   }
-  // ],
+  "host_permissions": [
+    "*://*.squadlocker.com/*"
+  ],
   "icons": {
-    "16": "img.png"
+    "16": "SL.png",
+    "32": "SL.png",
+    "48": "SL.png",
+    "128": "SL.png"
   },
-  "browser_action": {
-    "default_icon": "img.png",
+  "action": {
+    "default_icon": {
+      "16": "SL.png",
+      "32": "SL.png"
+    },
     "default_popup": "popup.html",
-    "default_title": "Popup Title"
+    "default_title": "SquadLocker Utility"
   },
   "commands": {
     "qa": {
@@ -59,9 +60,6 @@
     }
   },
   "background": {
-    "persistent": true,
-    "scripts": [
-      "background.js"
-    ]
+    "service_worker": "background.js"
   }
 }
