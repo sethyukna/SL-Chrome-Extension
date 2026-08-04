@@ -65,46 +65,107 @@ const PAGE_LABELS = {
   'order-management': 'Order'
 };
 
+const ENV_LABELS = {
+  dev: 'Dev',
+  qa: 'QA',
+  prod: 'Prod',
+  local: 'Local'
+};
+
 async function initRecentLaunches() {
   const fieldset = document.getElementById('open-recent');
-  const select = document.getElementById('open-link-recent');
+  const listbox = document.getElementById('open-link-recent');
 
   const { recentLaunches } = await chrome.storage.sync.get('recentLaunches');
   const entries = Array.isArray(recentLaunches) ? recentLaunches : [];
 
   if (!entries.length) {
-    // Stays hidden so the popup does not show an empty dropdown.
+    // Stays hidden so the popup does not show an empty list.
     return;
   }
 
-  for (const entry of entries) {
-    const option = document.createElement('option');
-    const label = PAGE_LABELS[entry.pageUrl] || entry.pageUrl;
-    option.textContent = `${label}: ${entry.id}`;
-    // Both fields are needed to relaunch, and option values are strings.
-    option.value = JSON.stringify({ id: entry.id, pageUrl: entry.pageUrl });
-    select.appendChild(option);
+  let selectedIndex = 0;
+
+  entries.forEach((entry, index) => {
+    const row = document.createElement('div');
+    row.className = 'recent-item';
+    row.setAttribute('role', 'option');
+    row.dataset.index = String(index);
+
+    const chip = document.createElement('span');
+    chip.className = 'env-chip';
+    // env may be absent on entries written before this was tracked.
+    chip.dataset.env = entry.env || 'unknown';
+    chip.textContent = ENV_LABELS[entry.env] || '—';
+
+    const text = document.createElement('span');
+    text.className = 'recent-id';
+    const pageLabel = PAGE_LABELS[entry.pageUrl] || entry.pageUrl;
+    text.textContent = `${pageLabel}: ${entry.id}`;
+
+    row.append(chip, text);
+    // Full text in a tooltip, since long GUIDs are visually truncated.
+    row.title = `${ENV_LABELS[entry.env] || 'Unknown env'} — ${pageLabel}: ${entry.id}`;
+
+    row.addEventListener('click', () => select(index));
+    // Double-click reopens in the same environment it was launched in.
+    row.addEventListener('dblclick', () => {
+      if (entry.env) {
+        launchRecent(entry, entry.env);
+      }
+    });
+
+    listbox.appendChild(row);
+  });
+
+  function select(index) {
+    selectedIndex = index;
+    listbox.querySelectorAll('.recent-item').forEach((row, i) => {
+      row.setAttribute('aria-selected', String(i === index));
+    });
+    listbox.children[index]?.scrollIntoView({ block: 'nearest' });
+  }
+
+  select(0);
+
+  listbox.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      select(Math.min(selectedIndex + 1, entries.length - 1));
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      select(Math.max(selectedIndex - 1, 0));
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const entry = entries[selectedIndex];
+      if (entry?.env) {
+        launchRecent(entry, entry.env);
+      }
+    }
+  });
+
+  async function launchRecent(entry, env) {
+    await chrome.runtime.sendMessage({
+      type: 'launchLink',
+      options: { env, pageUrl: entry.pageUrl, guid: entry.id }
+    });
+    window.close();
   }
 
   fieldset.hidden = false;
 
   for (const button of fieldset.querySelectorAll('button[data-openrecent]')) {
-    button.addEventListener('click', async () => {
-      if (!select.value) {
-        return;
+    button.addEventListener('click', () => {
+      const entry = entries[selectedIndex];
+      if (entry) {
+        launchRecent(entry, button.dataset.openrecent);
       }
-      const { id, pageUrl } = JSON.parse(select.value);
-      await chrome.runtime.sendMessage({
-        type: 'launchLink',
-        options: { env: button.dataset.openrecent, pageUrl, guid: id }
-      });
-      window.close();
     });
   }
 
   document.getElementById('clear-recent').addEventListener('click', async () => {
     await chrome.runtime.sendMessage({ type: 'clearRecentLaunches' });
-    select.replaceChildren();
+    listbox.replaceChildren();
     fieldset.hidden = true;
   });
 }

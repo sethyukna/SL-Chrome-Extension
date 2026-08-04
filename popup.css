@@ -52,6 +52,68 @@ select {
     padding: 0 5px;
     float: right;
 }
+
+/* Recent items listbox */
+#open-link-recent {
+    max-height: 132px;
+    overflow-y: auto;
+    border: solid 1px #d2d2d2;
+    margin-bottom: 5px;
+}
+#open-link-recent:focus-visible {
+    outline: 2px solid #2e4481;
+    outline-offset: -2px;
+}
+.recent-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 0.8125em;
+    border-bottom: solid 1px #eee;
+}
+.recent-item:last-child {
+    border-bottom: none;
+}
+.recent-item:hover {
+    background: #f5f6f8;
+}
+.recent-item[aria-selected="true"] {
+    background: #e8ebf3;
+}
+.recent-item .recent-id {
+    /* Long GUIDs truncate rather than widening the popup. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Environment chip */
+.env-chip {
+    /* Fixed width so the id column lines up across rows. */
+    flex: 0 0 44px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #FFF;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.env-chip[data-env="dev"]   { background: #1f7a5c; }
+.env-chip[data-env="qa"]    { background: #8a6300; }
+.env-chip[data-env="prod"]  { background: #c0392b; }
+.env-chip[data-env="local"] { background: #5a6472; }
+/* Entries recorded before the environment was tracked. */
+.env-chip[data-env="unknown"] {
+    background: #FFF;
+    color: #999;
+    border: dashed 1px #c4c4c4;
+    line-height: 14px;
+}
 fieldset {
     border: solid 1px #d2d2d2;
     border-left:none;

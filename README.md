@@ -49,13 +49,30 @@ current one. Pressing <kbd>Enter</kbd> in a field is a shortcut for **Dev**.
 ### Recent items
 
 Anything you launch from the popup is remembered, so you can reopen it without
-pasting the ID again. Pick it from **Open recent item** and choose an
-environment — handy for checking the same locker across DEV and QA.
+pasting the ID again. Each row carries a colour-coded chip showing the
+environment it was launched in:
 
-The last 15 launches are kept, newest first, labelled like `Locker: <id>`.
-Relaunching something moves it back to the top rather than duplicating it. The
-list syncs with your Chrome profile, and **Clear** empties it. The dropdown is
-hidden until you've launched something.
+| Chip | Environment |
+| --- | --- |
+| green `DEV` | DEV |
+| amber `QA` | QA |
+| red `PROD` | PROD — red so production is obvious at a glance |
+| grey `LOCAL` | LOCAL |
+
+Pick a row, then click an environment button to open it there — handy for
+checking the same locker across DEV and QA. **Double-click** a row (or select it
+and press <kbd>Enter</kbd>) to reopen it in its original environment.
+<kbd>↑</kbd>/<kbd>↓</kbd> move between rows.
+
+The last 15 launches are kept, newest first, labelled like `Locker: <id>`. A
+record counts as distinct per environment, so the same locker in DEV and QA is
+two rows; relaunching an existing one moves it back to the top instead of
+duplicating. The list syncs with your Chrome profile, and **Clear** empties it.
+The list stays hidden until you've launched something.
+
+Rows saved before this feature shipped have no environment recorded and show a
+dashed `—` chip. They still open via the environment buttons; only the
+reopen-in-original shortcut is unavailable for them.
 
 ### Right-click menu
 
@@ -144,11 +161,17 @@ last segment with `url.split('/')[1]` as the label, which is always the empty
 string between the two slashes in `https://host/page/id`. Every dropdown entry
 would have been blank.
 
-It now stores a proper list of `{id, pageUrl, launchedAt}` records and is
+It now stores a proper list of `{id, pageUrl, env, launchedAt}` records and is
 [documented above](#recent-items). Recording happens when the tab is created
 rather than 5 seconds later via `setTimeout` + a page-title check, since an
 idle service worker gets killed long before such a timer fires. Upgrades from
 v1 reset the old object-shaped value to an empty list.
+
+The recent list is a `role="listbox"` of `div`s rather than a `<select>`. That
+is deliberate: browsers strip author styling from `<option>` elements, so the
+environment chips cannot be rendered inside a native dropdown. The listbox
+implements arrow-key navigation and `aria-selected` to keep the keyboard and
+screen-reader behaviour a `<select>` would have given for free.
 
 **Manifest**
 

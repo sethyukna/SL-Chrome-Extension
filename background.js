@@ -174,19 +174,22 @@ async function launchLink(options) {
 
   // Recorded here rather than after the tab loads: the old version waited 5s
   // on a timer to inspect the tab title, which a suspended worker never runs.
-  await recordRecentLaunch({ id, pageUrl: options.pageUrl });
+  await recordRecentLaunch({ id, pageUrl: options.pageUrl, env: options.env });
 }
 
-async function recordRecentLaunch({ id, pageUrl }) {
+async function recordRecentLaunch({ id, pageUrl, env }) {
   const { recentLaunches } = await chrome.storage.sync.get('recentLaunches');
   const existing = Array.isArray(recentLaunches) ? recentLaunches : [];
 
-  // Same record launched again moves to the top instead of duplicating.
+  // Same record in the same environment moves to the top instead of
+  // duplicating. The env is part of the identity, so the same locker opened
+  // in DEV and QA is two entries.
   const deduped = existing.filter(
-    (entry) => !(entry.id === id && entry.pageUrl === pageUrl)
+    (entry) =>
+      !(entry.id === id && entry.pageUrl === pageUrl && entry.env === env)
   );
 
-  deduped.unshift({ id, pageUrl, launchedAt: Date.now() });
+  deduped.unshift({ id, pageUrl, env, launchedAt: Date.now() });
 
   await chrome.storage.sync.set({
     recentLaunches: deduped.slice(0, MAX_RECENT_LAUNCHES)
